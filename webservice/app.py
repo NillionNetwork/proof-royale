@@ -13,6 +13,8 @@ CORS(
     app,
     origins=[
         "http://localhost:3000",
+        "http://tlsnotary-game.vercel.app",
+        "https://tlsnotary-game.vercel.app",
     ],
 )
 
@@ -64,13 +66,16 @@ async def status():
 @app.route("/user/<username>", methods=["GET"])
 async def rando_user(username):
     try:
-        my_achievements = random.sample(achievements, k=random.randint(5, len(achievements)))
+        my_achievements = random.sample(
+            achievements, k=random.randint(5, len(achievements))
+        )
         return jsonify(
             {
                 "status": "ok",
                 "score": random.randint(100000, 30000000),
                 "user": username,
-                "achievements": str((my_achievements*100)/len(achievements)) + "%",
+                "achievements": my_achievements,
+                "percentage": str((len(my_achievements) * 100) / len(achievements)) + "%",
                 "completed": len(my_achievements),
             }
         )

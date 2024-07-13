@@ -1,4 +1,4 @@
-service: nilethglobal
+service: ethglobal
 frameworkVersion: "3"
 
 provider:
