@@ -1,5 +1,4 @@
-import os
-import re
+import json
 import serverless_wsgi
 
 from flask import Flask, jsonify
@@ -11,6 +10,7 @@ CORS(app)
 
 with open("data.json", "r") as fp:
     PLAYERS = json.load(fp)
+
 
 def err(msg):
     if isinstance(msg, bytes):
