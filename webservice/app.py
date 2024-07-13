@@ -7,14 +7,7 @@ from flask_cors import CORS
 
 
 app = Flask(__name__)
-CORS(
-    app,
-    origins=[
-        "http://localhost:3000",
-        "http://tlsnotary-game.vercel.app",
-        "https://tlsnotary-game.vercel.app",
-    ],
-)
+CORS(app)
 
 with open("data.json", "r") as fp:
     PLAYERS = json.load(fp)
