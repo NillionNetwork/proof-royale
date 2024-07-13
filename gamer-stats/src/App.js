@@ -9,12 +9,18 @@ import {
 } from "@chakra-ui/react";
 import axios from "axios";
 
+const useQuery = () => {
+  return new URLSearchParams(useLocation().search);
+};
+
 const App = () => {
   const [userInfo, setUserInfo] = useState(null);
+  const query = useQuery();
+  const username = query.get("username");
 
   useEffect(() => {
     axios.get(
-      "https://n70y7tgezh.execute-api.eu-west-1.amazonaws.com/testnet-1/user/player1",
+      `https://n70y7tgezh.execute-api.eu-west-1.amazonaws.com/testnet-1/user/${username}`,
     )
       .then((response) => {
         setUserInfo(response.data);
