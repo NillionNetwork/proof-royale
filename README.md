@@ -21,7 +21,7 @@ Run the notary ([tlsn/notary-server](https://github.com/tlsnotary/tlsn) commit `
 cargo r -r
 ```
 
-Compile the plugin to WASM from [`./plugin/examples/csteam`](./plugin/examples/csteam):
+Compile the plugin to WASM from [`./plugin/examples/gamer_stats`](./plugin/examples/gamer_stats):
 ```bash
 extism-js index.js -i index.d.ts -o index.wasm
 ```
