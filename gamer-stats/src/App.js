@@ -7,6 +7,7 @@ import {
   ListItem,
   Text,
 } from "@chakra-ui/react";
+import { BrowserRouter as Router, Route, useLocation } from 'react-router-dom';
 import axios from "axios";
 
 const useQuery = () => {
