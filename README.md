@@ -1,15 +1,18 @@
-# Proof Royal [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/NillionNetwork/proof-royale/blob/main/LICENSE)
+# Proof Royale [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/NillionNetwork/proof-royale/blob/main/LICENSE)
 
-<p align="center"><img width="20%" src="https://github.com/NillionNetwork/proof-royale/blob/main/proof-royale.png" alt="Proof Royal logo" /></p>
+<p align="center"><img width="20%" src="https://github.com/NillionNetwork/proof-royale/blob/main/proof-royale.png" alt="Proof Royale logo" /></p>
 
 --------------------------------------------------------------------------------
 
 ## TL;DR
-Proof Royal is a ...
+Proof Royale is a ...
 
 ## Building
 
 Clone this repository and build the extension from the [`extension`](./extension) directory.
+```bash
+git clone git@github.com:NillionNetwork/proof-royale.git --recursive
+```
 
 Run the proxy:
 ```bash
