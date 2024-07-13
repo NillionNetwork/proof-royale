@@ -39,9 +39,10 @@ const App = () => {
         borderRadius="lg"
       >
         <Heading mb="4" textAlign="center">Gamer Stats</Heading>
-        <Text fontSize="xl">Username: {userInfo.username}</Text>
+        <Text fontSize="xl">Username: {userInfo.user}</Text>
         <Text fontSize="xl">Score: {userInfo.score}</Text>
         <Heading size="md" mt="4">Achievements</Heading>
+        <Text fontSize="md">completed {userInfo.percentage}</Text>
         <List spacing={3} mt="2">
           {userInfo.achievements.map((achievement, index) => (
             <ListItem
