@@ -7,17 +7,12 @@ import {
   ListItem,
   Text,
 } from "@chakra-ui/react";
-import { BrowserRouter as Router, Route, useLocation } from "react-router-dom";
 import axios from "axios";
-
-const useQuery = () => {
-  return new URLSearchParams(useLocation().search);
-};
 
 const GamerStats = () => {
   const [userInfo, setUserInfo] = useState(null);
-  const query = useQuery();
-  const username = query.get("username");
+  const params = new URLSearchParams(window.location.search);
+  const username = params.get("username");
 
   useEffect(() => {
     axios.get(
@@ -69,9 +64,7 @@ const GamerStats = () => {
 const App = () => {
   return (
     <ChakraProvider>
-      <Router>
-        <Route path="/" component={GamerStats} />
-      </Router>
+      <GamerStats />
     </ChakraProvider>
   );
 };
