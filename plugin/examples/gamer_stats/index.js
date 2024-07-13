@@ -3,6 +3,19 @@ function isValidHost(urlString) {
   return url.hostname === "tlsnotary-game.vercel.app";
 }
 
+function extractGamerStatsId(urlString) {
+    const url = new URL(urlString);
+
+    // Validate the host and search params pattern
+    if (url.hostname === 'tlsnotary-game.vercel.app' && url.searchParams.has('username')) {
+        // Extract the username from the query parameter
+        console.log(`parseGamerStatsResp) params: ${url.searchParams.get('username')}`)
+
+        return url.searchParams.get('username');
+    }
+    return null; // Return null if URL is not valid or does not contain the username query parameter
+}
+
 function gotoGamerStats() {
   const { redirect } = Host.getFunctions();
   const mem = Memory.fromString('https://tlsnotary-game.vercel.app/?username=player1');
@@ -19,9 +32,16 @@ function start() {
 }
 
 function two() {
+  const gamer_stats_id = extractGamerStatsId(Config.get('tabUrl'))
+
+  if (!gamer_stats_id) {
+    Host.outputString(JSON.stringify(false));
+    return;
+  }
+
   Host.outputString(
     JSON.stringify({
-      url: 'https://n70y7tgezh.execute-api.eu-west-1.amazonaws.com/testnet-1/user/player1',
+      url: `https://n70y7tgezh.execute-api.eu-west-1.amazonaws.com/testnet-1/user/${gamer_stats_id}`,
       method: 'GET',
       headers: {},
       secretHeaders: [],
