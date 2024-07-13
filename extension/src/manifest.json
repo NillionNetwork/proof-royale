@@ -3,8 +3,8 @@
   "name": "Custom TLSN Extension",
   "description": "A chrome extension for TLSN",
   "options_page": "options.html",
-  "background": { "service_worker": "background.bundle.js",
-    "persistent": true
+  "background": {
+    "service_worker": "background.bundle.js"
   },
   "action": {
     "default_popup": "popup.html",
@@ -28,7 +28,12 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["content.styles.css", "icon-128.png", "icon-34.png", "content.bundle.js"],
+      "resources": [
+        "content.styles.css",
+        "icon-128.png",
+        "icon-34.png",
+        "content.bundle.js"
+      ],
       "matches": ["http://*/*", "https://*/*", "<all_urls>"]
     }
   ],
