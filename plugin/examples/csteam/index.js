@@ -66,7 +66,7 @@ function three() {
 
     const mem = Memory.fromString(JSON.stringify({
       ...params,
-    //   getSecretResponse: "parseCsteamResp",
+      getSecretResponse: "parseCsteamResp",
     }));
     const mem_offset = mem.offset;
     console.log(`three) mem: ${JSON.stringify(Memory.find(mem_offset).readString(), null, 4)}`)
