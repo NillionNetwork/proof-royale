@@ -1,0 +1,23 @@
+service: nilethglobal
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  stage: testnet-1
+  region: eu-west-1
+  deploymentBucket:
+    name: sls-${self:service}
+  ecr:
+    scanOnPush: true
+    images:
+      appimage:
+        path: ./
+
+functions:
+  app:
+    image:
+      name: appimage
+    timeout: 30
+    events:
+      - http: ANY /
+      - http: 'ANY /{proxy+}'
