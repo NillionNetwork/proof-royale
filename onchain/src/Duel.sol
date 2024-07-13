@@ -11,13 +11,13 @@ contract DuelContract is ReentrancyGuard {
     struct Player {
         address playerAddress;
         string platformUserID;
+        bool hasJoined;
     }
 
     bool public accepted;
     Player public challenger;
     Player public defender;
     address public verifier;
-    address public asset;
     uint256 public betSize;
     uint256 public expiry;
     bool public active = false;
@@ -25,24 +25,22 @@ contract DuelContract is ReentrancyGuard {
     event PlayerJoined(address player);
     event DuelExpired(address duelAddress);
     event WinClaimed(address winner);
-    event ContractTerminated(address terminatedContract);
+    event ChallengeRescinded(address rescindedDuel);
 
     constructor(
-        string memory _title,
-        string memory _achievement,
-        address _asset,
-        uint256 _amount,
-        uint256 _expiryDate,
-        address _verifier,
+        string memory _title, // Gamer Stats
+        string memory _achievement, // >70% completion
+        uint256 _betSize, // 0.01 ETH
+        uint256 _expiryDate, // 1 month
+        address _verifier, // Gnosis Safe Address
         address _challengerAddr,
         address _defenderAddr,
         string memory _challengerUserID,
         string memory _defenderUserID
-        ) {
+    ) payable {
         defender = Player(_defenderAddr, _defenderUserID);
         game = Game(_title, _achievement);
-        asset = _asset;
-        betSize = _amount;
+        betSize = _betSize;
         expiry = _expiryDate;
         verifier = _verifier;
         challenger = Player(_challengerAddr, _challengerUserID);
@@ -50,7 +48,8 @@ contract DuelContract is ReentrancyGuard {
     }
 
     function joinDuel(string memory platformUserID) public payable nonReentrant {
-        require(msg.value >= betSize, "Minimum bet amount not met."); // Change betAmount to betSize
+        require(msg.value == betSize, "Incorrect ETH amount sent.");
+
         bool isChallenger = msg.sender == challenger.playerAddress && !challenger.hasJoined;
         bool isDefender = msg.sender == defender.playerAddress && !defender.hasJoined;
 
@@ -64,64 +63,54 @@ contract DuelContract is ReentrancyGuard {
             defender.hasJoined = true;
         }
 
-        if (msg.value > betAmount) {
-            payable(msg.sender).transfer(msg.value - betAmount);
-        }
-
         emit PlayerJoined(msg.sender);
+    }
+
+    function rescindChallenge() public {
+        require(msg.sender == challenger.playerAddress, "Only the challenger can rescind the challenge.");
+        require(!defender.hasJoined, "Defender has already joined.");
+
+        active = false;
+        payable(challenger.playerAddress).transfer(address(this).balance);
+        emit ChallengeRescinded(address(this));
     }
 
     function matchExpired() public nonReentrant {
         require(block.timestamp > expiry, "Duel not yet expired.");
         require(active, "Duel already settled.");
-        payable(challenger.playerAddress).transfer(betAmount);
-        payable(defender.playerAddress).transfer(betAmount);
         active = false;
+        payable(challenger.playerAddress).transfer(betSize);
+        payable(defender.playerAddress).transfer(betSize);
         emit DuelExpired(address(this));
     }
 
-    function claimWin() public nonReentrant {
-        require(msg.sender == verifier, "Only verifier can determine the winner.");
+    function claimWin(address winner) public onlyVerifier{
         require(active, "Duel is not active.");
-        // Implement win logic and token transfer
+        require(winner == challenger.playerAddress || winner == defender.playerAddress, "Only player addresses can win.");
         active = false;
-        emit WinClaimed(msg.sender); // Winner's address to be added after logic
-    }
-
-    function terminateContract() public onlyVerifier {
-        require(!active, "Cannot terminate an active duel.");
-        emit ContractTerminated(address(this));
-        selfdestruct(payable(verifier));
+        payable(winner).transfer(address(this).balance);
+        emit WinClaimed(msg.sender);
     }
 
     modifier onlyVerifier() {
         require(msg.sender == verifier, "Only verifier can perform this action.");
         _;
     }
-}
 
-    function getDuelDetails() public view returns (
-        bool isActive,
+    function getPlayerDetails() public view returns (
         address challengerAddress,
         string memory challengerUserID,
         bool challengerJoined,
         address defenderAddress,
         string memory defenderUserID,
         bool defenderJoined,
-        address verifierAddress,
-        uint256 betAmountValue,
-        uint256 duelExpiry
     ) {
-        isActive = active;
         challengerAddress = challenger.playerAddress;
         challengerUserID = challenger.platformUserID;
         challengerJoined = challenger.hasJoined;
         defenderAddress = defender.playerAddress;
         defenderUserID = defender.platformUserID;
         defenderJoined = defender.hasJoined;
-        verifierAddress = verifier;
-        betAmountValue = betAmount;
-        duelExpiry = expiry;
     }
 
     function isPlayerJoined(address player) public view returns (bool) {
