@@ -20,6 +20,7 @@ contract DuelContract is ReentrancyGuard {
     address public asset;
     uint256 public betSize;
     uint256 public expiry;
+    bool public active = false;
 
     event PlayerJoined(address player);
     event DuelExpired(address duelAddress);
@@ -49,7 +50,7 @@ contract DuelContract is ReentrancyGuard {
     }
 
     function joinDuel(string memory platformUserID) public payable nonReentrant {
-        require(msg.value >= betAmount, "Mimimum bet amount not met.");
+        require(msg.value >= betSize, "Minimum bet amount not met."); // Change betAmount to betSize
         bool isChallenger = msg.sender == challenger.playerAddress && !challenger.hasJoined;
         bool isDefender = msg.sender == defender.playerAddress && !defender.hasJoined;
 
