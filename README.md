@@ -1,6 +1,7 @@
-<p align="center">Proof Royal <img width="10%" src="https://github.com/NillionNetwork/proof-royale/blob/main/proof-royale.png" alt="Proof Royal logo" /></p>
+# Proof Royal [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/NillionNetwork/proof-royale/blob/main/LICENSE)
 
-[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/NillionNetwork/proof-royale/blob/main/LICENSE)
+<p align="center"><img width="20%" src="https://github.com/NillionNetwork/proof-royale/blob/main/proof-royale.png" alt="Proof Royal logo" /></p>
+
 --------------------------------------------------------------------------------
 
 ## TL;DR
