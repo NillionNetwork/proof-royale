@@ -2,45 +2,26 @@
 
 import { useEffect, useState } from "react";
 import {
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogCloseButton,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogOverlay,
   Box,
   Button,
-  ButtonGroup,
   Center,
-  chakra,
   Container,
-  createIcon,
-  Divider,
   Flex,
-  FormControl,
-  FormLabel,
-  GridItem,
   Heading,
   HStack,
-  Icon,
   Img,
-  Input,
-  InputGroup,
-  InputLeftElement,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalOverlay,
-  NumberInput,
-  NumberInputField,
-  NumberInputStepper,
-  Radio,
-  RadioGroup,
-  Select,
-  SimpleGrid,
   Stack,
-  Stat,
-  StatLabel,
-  StatNumber,
   Text,
   useColorModeValue,
   useDisclosure,
+  useToast,
   VStack,
 } from "@chakra-ui/react";
 import {
@@ -71,13 +52,24 @@ import {
   web3FromSource,
 } from "@polkadot/extension-dapp";
 
+import { useRouter } from "next/navigation";
 import Upload from "../components/Upload";
 import { useFile } from "../hooks/FileContext";
 
 export default function ProvePage() {
+  const router = useRouter();
+  const toast = useToast();
+  const { isOpen, onOpen, onClose } = useDisclosure();
   const { fileBytes } = useFile();
   const [accounts, setAccounts] = useState([]);
   const [api, setApi] = useState();
+  const [res, setRes] = useState();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const goHome = () => {
+    onClose();
+    router.push("/dashboard");
+  };
 
   useEffect(() => {
     (async () => {
@@ -103,61 +95,91 @@ export default function ProvePage() {
 
   const sendBytesToAvail = async () => {
     if (accounts.length < 1) return;
-    const injector = await web3FromSource(accounts[0].meta.source);
-    /*
-    if (injector.metadata) {
-      if (!extensionsInitialized[extension]) {
-        const metadata = getInjectorMetadata(api);
-        await injector.metadata.provide(metadata);
-      }
-    }
-    */
-
-    const tx = api.tx.dataAvailability.submitData(fileBytes);
-    await tx.signAndSend(
-      accounts[0].address,
-      {
-        signer: injector.signer,
-        app_id: 70,
-      },
-      ({ status, isError, events }) => {
-        if (isError) {
-          console.error(
-            "An error has occured, open console to view logs",
-            "error",
-          );
-          console.error(events);
-        }
-        if (status.isInBlock) {
-          console.info(
-            `Transaction included in block: ${status.asInBlock}`,
-            "info",
-          );
-        }
-        if (result.isFinalized) {
-          console.info(`Tx finalized.`);
-          res(result);
-        }
-      },
-    );
-
-    /*
-    api.tx.balances
-      .transfer("5C5555yEXUcmEJ5kkcCMvdZjUo7NGJiQJMS7vZXEeoMhj3VQ", 123456)
-      .signAndSend(
-        SENDER,
-        { signer: injector.signer, app_id: 70 },
-        (status) => {
-          // do stuff
+    setIsSubmitting(true);
+    try {
+      const injector = await web3FromSource(accounts[0].meta.source);
+      const tx = api.tx.dataAvailability.submitData(fileBytes);
+      await tx.signAndSend(
+        accounts[0].address,
+        {
+          signer: injector.signer,
+          app_id: 70,
+        },
+        ({ status, isError, events }) => {
+          console.log(`status as obj: ${JSON.stringify(status, null, 4)}`);
+          console.log(`events: next...`);
+          console.log(JSON.stringify(events, null, 4));
+          if (isError) {
+            console.error(
+              "An error has occured, open console to view logs",
+              "error",
+            );
+            console.error(events);
+          }
+          if (status.isInBlock) {
+            console.info(
+              `Transaction included in block: ${status.asInBlock}`,
+              "info",
+            );
+            setRes(status.asInBlock);
+          }
+          if (status.isFinalized) {
+            console.info(`Tx finalized.`);
+            toast({
+              title: "Post finalized.",
+              description:
+                "We've posted your proof via Avail to the blockchain.",
+              status: "success",
+              duration: 9000,
+              isClosable: true,
+            });
+            setIsSubmitting(false);
+            onOpen();
+          }
         },
       );
-    */
+    } catch (err) {
+      console.error(err);
+      setIsSubmitting(false);
+    }
   };
 
-  console.log(JSON.stringify(accounts, null, 4));
+  console.log(JSON.stringify(res, null, 4));
 
   return (
     <Container maxW={"3xl"}>
+      <AlertDialog
+        motionPreset="slideInBottom"
+        onClose={onClose}
+        isOpen={isOpen}
+        isCentered
+      >
+        <AlertDialogOverlay />
+        <AlertDialogContent>
+          <AlertDialogHeader>Proof Sent for Validation</AlertDialogHeader>
+          <AlertDialogCloseButton />
+          <AlertDialogBody>
+            When one or more validators can validate your proof using TLSNotary
+            based services, it will automatically trigger a release of funds
+            through the attached escrow account.
+          </AlertDialogBody>
+          <AlertDialogFooter>
+            <Button
+              onClick={() =>
+                window.open(
+                  `https://explorer.avail.so/#/explorer/query/${res}`,
+                  "_blank",
+                  "noopener,noreferrer",
+                )}
+            >
+              Explorer
+            </Button>
+            <Button variant="ghost" ml={3} onClick={goHome}>
+              Close
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <Stack
         textAlign={"center"}
         spacing={{ base: 8, md: 14 }}
@@ -192,7 +214,7 @@ export default function ProvePage() {
             </Box>
             <VStack borderTop={"1px"} p={5} color="black">
               <Heading color={"brown"} fontSize={"md"} noOfLines={1}>
-                Step #1
+                Get proof
               </Heading>
               <Text color={"brown"}>
                 Select the TLSNotary file that you obtained using the Proof
@@ -226,9 +248,11 @@ export default function ProvePage() {
                   colorScheme="orange"
                   variant="solid"
                   isDisabled={!fileBytes}
+                  isLoading={isSubmitting}
+                  loadingText="Please wait"
                   onClick={sendBytesToAvail}
                 >
-                  Next
+                  Post to Blockchain
                 </Button>
               </Flex>
             </HStack>
