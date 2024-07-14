@@ -57,18 +57,6 @@ const SingleUploadProof = ({
           </VStack>
         </Center>
 
-        {uploadedFile && (
-          <ScaleFade initialScale={0.9} in={uploadedFile !== null}>
-            <Image
-              w="100%"
-              h={"100%"}
-              src={URL.createObjectURL(uploadedFile)}
-              alt="Uploaded"
-              rounded={rounded}
-            />
-          </ScaleFade>
-        )}
-
         <chakra.input
           required
           style={{ display: "none" }}

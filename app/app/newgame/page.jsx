@@ -335,7 +335,7 @@ export default function NewGame() {
                   onChange={handleGameTerms}
                 >
                   {gameValue && achievementMap[gameValue].map((item) => {
-                    return <option>{item}</option>;
+                    return <option key={item}>{item}</option>;
                   })}
                 </Select>
               </FormControl>
