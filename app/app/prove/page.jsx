@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -42,7 +43,14 @@ import {
   useDisclosure,
   VStack,
 } from "@chakra-ui/react";
-import { ApiPromise, initialize, signedExtensions, types } from "avail-js-sdk";
+import {
+  ApiPromise,
+  initialize,
+  isConnected,
+  signedExtensions,
+  types,
+} from "avail-js-sdk";
+
 import { ArrowForwardIcon } from "@chakra-ui/icons";
 
 import { BsArrowUpRight } from "react-icons/bs";
@@ -56,13 +64,97 @@ import { BsHeart } from "react-icons/bs";
 import { GiDeathSkull, GiRuleBook } from "react-icons/gi";
 import { TbPigMoney } from "react-icons/tb";
 
-import { FaPeopleGroup, FaPeopleRobbery } from "react-icons/fa6";
+import {
+  web3Accounts,
+  web3Enable,
+  web3FromAddress,
+  web3FromSource,
+} from "@polkadot/extension-dapp";
 
 import Upload from "../components/Upload";
 import { useFile } from "../hooks/FileContext";
 
 export default function ProvePage() {
   const { fileBytes } = useFile();
+  const [accounts, setAccounts] = useState([]);
+  const [api, setApi] = useState();
+
+  useEffect(() => {
+    (async () => {
+      await web3Enable("Proof Royal Avail Bridge");
+      const allAccounts = await web3Accounts();
+      setAccounts(allAccounts);
+      const api_ = await initialize(
+        "wss://turing-rpc.avail.so/ws",
+      );
+      const [chain, nodeName, nodeVersion] = await Promise.all([
+        api_.rpc.system.chain(),
+        api_.rpc.system.name(),
+        api_.rpc.system.version(),
+      ]);
+
+      setApi(api_);
+
+      console.log(
+        `Connected to chain ${chain} using ${nodeName} and node version ${nodeVersion} - is connected: ${isConnected()}`,
+      );
+    })();
+  }, [web3Enable, web3Accounts, setAccounts]);
+
+  const sendBytesToAvail = async () => {
+    if (accounts.length < 1) return;
+    const injector = await web3FromSource(accounts[0].meta.source);
+    /*
+    if (injector.metadata) {
+      if (!extensionsInitialized[extension]) {
+        const metadata = getInjectorMetadata(api);
+        await injector.metadata.provide(metadata);
+      }
+    }
+    */
+
+    const tx = api.tx.dataAvailability.submitData(fileBytes);
+    await tx.signAndSend(
+      accounts[0].address,
+      {
+        signer: injector.signer,
+        app_id: 70,
+      },
+      ({ status, isError, events }) => {
+        if (isError) {
+          console.error(
+            "An error has occured, open console to view logs",
+            "error",
+          );
+          console.error(events);
+        }
+        if (status.isInBlock) {
+          console.info(
+            `Transaction included in block: ${status.asInBlock}`,
+            "info",
+          );
+        }
+        if (result.isFinalized) {
+          console.info(`Tx finalized.`);
+          res(result);
+        }
+      },
+    );
+
+    /*
+    api.tx.balances
+      .transfer("5C5555yEXUcmEJ5kkcCMvdZjUo7NGJiQJMS7vZXEeoMhj3VQ", 123456)
+      .signAndSend(
+        SENDER,
+        { signer: injector.signer, app_id: 70 },
+        (status) => {
+          // do stuff
+        },
+      );
+    */
+  };
+
+  console.log(JSON.stringify(accounts, null, 4));
 
   return (
     <Container maxW={"3xl"}>
@@ -134,6 +226,7 @@ export default function ProvePage() {
                   colorScheme="orange"
                   variant="solid"
                   isDisabled={!fileBytes}
+                  onClick={sendBytesToAvail}
                 >
                   Next
                 </Button>
