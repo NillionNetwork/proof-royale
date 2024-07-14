@@ -2,6 +2,7 @@
 
 <p align="left"><img width="50%" src="https://github.com/NillionNetwork/proof-royale/blob/main/cover.png" alt="Proof Royale Cover" /></p>
 
+Read our project report [here](https://docs.google.com/document/d/1juoU7RD7-urofX8dAf53D0tXLY2ndc_NGEQiAxdk8HY/edit?usp=sharing).
 --------------------------------------------------------------------------------
 
 ## TL;DR
