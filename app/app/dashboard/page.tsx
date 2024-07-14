@@ -1,20 +1,12 @@
 "use client";
 import {
-  Box,
   Button,
-  Center,
   Container,
-  createIcon,
-  Heading,
   HStack,
-  Icon,
-  Text,
-  useColorModeValue,
   VStack,
 } from "@chakra-ui/react";
 import { CloseIcon } from "@chakra-ui/icons";
 
-import { ApiPromise, initialize, signedExtensions, types } from "avail-js-sdk";
 import { JoinGameCard, NewGameCard, ProveGameCard } from "../components/cards";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 

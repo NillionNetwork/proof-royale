@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  websockify:
+    image: novnc/websockify:latest
+    network_mode: host
+    volumes:
+      - /opt/certbot/keys/cert.key:/opt/cert.key
+      - /opt/certbot/keys/cert.crt:/opt/cert.crt
+        #command: 0.0.0.0:55688 steamcommunity.com:443 --cert=/opt/cert.crt --key=/opt/cert.key
+      #command: 0.0.0.0:55688 lichess.org:443 --cert=/opt/cert.crt --key=/opt/cert.key
+    command: 0.0.0.0:55688 n70y7tgezh.execute-api.eu-west-1.amazonaws.com:443 --cert=/opt/cert.crt --key=/opt/cert.key
+  notary:
+    build:
+      context: .
+      dockerfile: notary-server/notary-server.Dockerfile
+    network_mode: host
+    volumes:
+      - /opt/certbot/keys/cert.key:/opt/cert.key
+      - /opt/certbot/keys/cert.crt:/opt/cert.crt
+      - /opt/notary/eckey.pem:/opt/eckey.pem
+      - /opt/notary/eckey.pub:/opt/eckey.pub
+      - ./notary-server/config/config.yaml:/root/.notary-server/config/config.yaml
