@@ -4,7 +4,6 @@ import { useState } from "react";
 import {
   Box,
   Button,
-  ButtonGroup,
   Center,
   chakra,
   Container,
@@ -27,7 +26,6 @@ import {
   ModalOverlay,
   NumberInput,
   NumberInputField,
-  NumberInputStepper,
   Radio,
   RadioGroup,
   Select,
@@ -55,6 +53,46 @@ import { GiDeathSkull, GiRuleBook } from "react-icons/gi";
 import { TbPigMoney } from "react-icons/tb";
 
 import { FaPeopleGroup, FaPeopleRobbery } from "react-icons/fa6";
+import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
+
+const duelFactoryAddress = "0xd3a129dbd8e3dbae175392d34d0fa30f2ba2a5bc";
+const duelFactoryABI = [
+  "function createDuel(string memory _title, string memory _achievement, uint256 _betSize, uint256 _expiryDate, address _verifier, address _defenderAddr, string memory _challengerUserID, string memory _defenderUserID) public payable returns (address)",
+];
+const ARBITRUM_SEPOLIA_CHAIN_ID = "0x66eee"; // Hexadecimal chain ID for Arbitrum Sepolia (505)
+
+const checkAndSwitchNetwork = async () => {
+  if (window.ethereum) {
+    try {
+      // Request to switch to the Arbitrum Sepolia network
+      await window.ethereum.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: ARBITRUM_SEPOLIA_CHAIN_ID }],
+      });
+    } catch (switchError) {
+      if (switchError.code === 4902) {
+        try {
+          // Try to add the Arbitrum Sepolia network if it's not available
+          await window.ethereum.request({
+            method: "wallet_addEthereumChain",
+            params: [{
+              chainId: ARBITRUM_SEPOLIA_CHAIN_ID,
+              rpcUrl:
+                "https://arb-sepolia.g.alchemy.com/v2/vCYo4htbu1PpUP5QQZ3sMgvVOBN2N9h9", // Update with your Infura project ID
+            }],
+          });
+        } catch (addError) {
+          console.error(
+            "Failed to add the Arbitrum Sepolia network:",
+            addError,
+          );
+        }
+      } else {
+        console.error("Could not switch to Arbitrum Sepolia:", switchError);
+      }
+    }
+  }
+};
 
 function StatsCard(props) {
   const { title, stat, icon, wager } = props;
@@ -96,8 +134,10 @@ function StatsCard(props) {
 }
 
 export default function NewGame() {
+  const { primaryWallet } = useDynamicContext();
   const router = useRouter();
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const [inProgress, setInProgress] = useState(false);
 
   const [gameTerms, setGameTerms] = useState();
   const handleGameTerms = (event) => setGameTerms(event.target.value);
@@ -135,6 +175,52 @@ export default function NewGame() {
       "Game Winner",
       "Game Loser",
     ],
+  };
+
+  const submitContract = async () => {
+    setInProgress(true);
+    await checkAndSwitchNetwork(); // Ensure the correct network
+    if (typeof window.ethereum !== "undefined") {
+      const signer = await primaryWallet.connector.ethers?.getSigner();
+      const duelFactory = new primaryWallet.connector.ethers.Contract(
+        duelFactoryAddress,
+        duelFactoryABI,
+        signer,
+      );
+
+      const title = gameValue;
+      const achievement = gameTerms;
+      const betSize = primaryWallet.connector.ethers.utils.parseEther(
+        wagerValue,
+      ); // 0.01 ETH
+      const expiryDate = Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60); // 30 days from now
+
+      const verifier = "0xaEc75df67Db9467BE89d468edbc8C0D503B643C4";
+      const defenderAddr = opponent;
+
+      const challengerUserID = "player1";
+      const defenderUserID = "player2";
+
+      try {
+        const txResponse = await duelFactory.createDuel(
+          title,
+          achievement,
+          betSize,
+          expiryDate,
+          verifier,
+          defenderAddr,
+          challengerUserID,
+          defenderUserID,
+          { value: betSize },
+        );
+        const receipt = await txResponse.wait();
+        console.log("Duel created:", receipt);
+      } catch (error) {
+        console.error("Error creating duel:", error);
+      }
+    } else {
+      console.log("Please install MetaMask!");
+    }
   };
 
   const ConfirmModal = () => {
@@ -236,7 +322,7 @@ export default function NewGame() {
                       roundedBottom={"sm"}
                       cursor={"pointer"}
                       w="full"
-                      onClick={() => null}
+                      onClick={submitContract}
                     >
                       <Text fontSize={"md"} fontWeight={"semibold"}>
                         Submit

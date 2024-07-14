@@ -19,36 +19,23 @@ import {
   Img,
   Stack,
   Text,
-  useColorModeValue,
   useDisclosure,
   useToast,
   VStack,
 } from "@chakra-ui/react";
-import {
-  ApiPromise,
-  initialize,
-  isConnected,
-  signedExtensions,
-  types,
-} from "avail-js-sdk";
+import { initialize, isConnected } from "avail-js-sdk";
 
 import { ArrowForwardIcon } from "@chakra-ui/icons";
 
-import { BsArrowUpRight } from "react-icons/bs";
 import { FaChessKnight, FaDiceFive } from "react-icons/fa";
 import { CgCardSpades } from "react-icons/cg";
-import { LuGamepad2 } from "react-icons/lu";
-
-import { FaEthereum } from "react-icons/fa";
 
 import { BsHeart } from "react-icons/bs";
-import { GiDeathSkull, GiRuleBook } from "react-icons/gi";
-import { TbPigMoney } from "react-icons/tb";
+import { GiDeathSkull } from "react-icons/gi";
 
 import {
   web3Accounts,
   web3Enable,
-  web3FromAddress,
   web3FromSource,
 } from "@polkadot/extension-dapp";
 
@@ -65,6 +52,11 @@ export default function ProvePage() {
   const [api, setApi] = useState();
   const [res, setRes] = useState();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const goHome = () => {
     onClose();
@@ -91,7 +83,11 @@ export default function ProvePage() {
         `Connected to chain ${chain} using ${nodeName} and node version ${nodeVersion} - is connected: ${isConnected()}`,
       );
     })();
-  }, [web3Enable, web3Accounts, setAccounts]);
+  }, [setAccounts]);
+
+  if (!isClient) {
+    return null;
+  }
 
   const sendBytesToAvail = async () => {
     if (accounts.length < 1) return;
@@ -190,7 +186,7 @@ export default function ProvePage() {
             bg="white"
             border={"1px"}
             borderColor="black"
-            boxShadow={useColorModeValue("6px 6px 0 black", "6px 6px 0 orange")}
+            boxShadow={"6px 6px 0 orange"}
           >
             <Box h={"200px"} borderBottom={"1px"} borderColor="black">
               <Img

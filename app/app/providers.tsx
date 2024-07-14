@@ -13,6 +13,7 @@ import {
   DynamicWagmiConnector,
   EthereumWalletConnectors,
 } from "@/lib/dynamic";
+import { EthersExtension } from "@dynamic-labs/ethers-v5";
 
 import { FileProvider } from "./hooks/FileContext";
 
@@ -29,6 +30,7 @@ export function Providers(props: { children: ReactNode }) {
           settings={{
             environmentId: "e989bf26-ed65-4ab1-ba55-2404830df7ee",
             walletConnectors: [EthereumWalletConnectors],
+            walletConnectorExtensions: [EthersExtension],
             events: {
               onAuthFlowClose: () => {
                 console.log("in onAuthFlowClose");
