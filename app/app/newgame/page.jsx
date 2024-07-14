@@ -41,6 +41,7 @@ import {
 } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 
+import { ethers } from "ethers";
 import { BsArrowUpRight } from "react-icons/bs";
 import { FaChessKnight, FaDiceFive } from "react-icons/fa";
 import { CgCardSpades } from "react-icons/cg";
@@ -182,7 +183,8 @@ export default function NewGame() {
     await checkAndSwitchNetwork(); // Ensure the correct network
     if (typeof window.ethereum !== "undefined") {
       const signer = await primaryWallet.connector.ethers?.getSigner();
-      const duelFactory = new primaryWallet.connector.ethers.Contract(
+      const provider = await primaryWallet.connector.ethers?.getWeb3Provider();
+      const duelFactory = new ethers.Contract(
         duelFactoryAddress,
         duelFactoryABI,
         signer,
@@ -190,7 +192,7 @@ export default function NewGame() {
 
       const title = gameValue;
       const achievement = gameTerms;
-      const betSize = primaryWallet.connector.ethers.utils.parseEther(
+      const betSize = ethers.utils.parseEther(
         wagerValue,
       ); // 0.01 ETH
       const expiryDate = Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60); // 30 days from now
