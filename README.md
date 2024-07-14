@@ -1,6 +1,6 @@
-# Proof Royale [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/NillionNetwork/proof-royale/blob/main/LICENSE)
+#  <img src="https://github.com/NillionNetwork/proof-royale/blob/main/proof-royale.png" width="32"/> Proof Royale [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/NillionNetwork/proof-royale/blob/main/LICENSE)
 
-<p align="center"><img width="20%" src="https://github.com/NillionNetwork/proof-royale/blob/main/proof-royale.png" alt="Proof Royale logo" /></p>
+<p align="left"><img width="50%" src="https://github.com/NillionNetwork/proof-royale/blob/main/cover.png" alt="Proof Royale Cover" /></p>
 
 --------------------------------------------------------------------------------
 
