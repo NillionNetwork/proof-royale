@@ -1,6 +1,6 @@
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 contract DuelContract is ReentrancyGuard {
     struct Game {
@@ -14,18 +14,34 @@ contract DuelContract is ReentrancyGuard {
         bool hasJoined;
     }
 
-    bool public accepted;
+    Game public game;
     Player public challenger;
     Player public defender;
     address public verifier;
     uint256 public betSize;
     uint256 public expiry;
-    bool public active = false;
+    bool public active;
 
     event PlayerJoined(address player);
     event DuelExpired(address duelAddress);
     event WinClaimed(address winner);
     event ChallengeRescinded(address rescindedDuel);
+
+    // Add modifiers for role-based access control
+    modifier onlyChallenger() {
+        require(msg.sender == challenger.playerAddress, "Only the challenger can perform this action.");
+        _;
+    }
+
+    modifier onlyDefender() {
+        require(msg.sender == defender.playerAddress, "Only the defender can perform this action.");
+        _;
+    }
+
+    modifier onlyVerifier() {
+        require(msg.sender == verifier, "Only verifier can perform this action.");
+        _;
+    }
 
     constructor(
         string memory _title, // Gamer Stats
@@ -38,38 +54,27 @@ contract DuelContract is ReentrancyGuard {
         string memory _challengerUserID,
         string memory _defenderUserID
     ) payable {
-        defender = Player(_defenderAddr, _defenderUserID);
+        require(msg.value == _betSize, "Incorrect ETH amount sent.");
+        defender = Player(_defenderAddr, _defenderUserID, false);
         game = Game(_title, _achievement);
         betSize = _betSize;
         expiry = _expiryDate;
         verifier = _verifier;
-        challenger = Player(_challengerAddr, _challengerUserID);
-        accepted = false;
+        challenger = Player(_challengerAddr, _challengerUserID, true);
+        active = false;
     }
 
-    function joinDuel(string memory platformUserID) public payable nonReentrant {
+    // Update joinDuel function to use onlyDefender modifier
+    function joinDuel() public payable nonReentrant onlyDefender {
         require(msg.value == betSize, "Incorrect ETH amount sent.");
-
-        bool isChallenger = msg.sender == challenger.playerAddress && !challenger.hasJoined;
-        bool isDefender = msg.sender == defender.playerAddress && !defender.hasJoined;
-
-        require(isChallenger || isDefender, "Not a registered player or already joined.");
-
-        if (isChallenger) {
-            challenger.platformUserID = platformUserID;
-            challenger.hasJoined = true;
-        } else {
-            defender.platformUserID = platformUserID;
-            defender.hasJoined = true;
-        }
-
+        defender.hasJoined = true;
+        active = true;
         emit PlayerJoined(msg.sender);
     }
 
-    function rescindChallenge() public {
-        require(msg.sender == challenger.playerAddress, "Only the challenger can rescind the challenge.");
+    // Update rescindChallenge function to use onlyChallenger modifier
+    function rescindChallenge() public onlyChallenger {
         require(!defender.hasJoined, "Defender has already joined.");
-
         active = false;
         payable(challenger.playerAddress).transfer(address(this).balance);
         emit ChallengeRescinded(address(this));
@@ -92,10 +97,7 @@ contract DuelContract is ReentrancyGuard {
         emit WinClaimed(msg.sender);
     }
 
-    modifier onlyVerifier() {
-        require(msg.sender == verifier, "Only verifier can perform this action.");
-        _;
-    }
+
 
     function getPlayerDetails() public view returns (
         address challengerAddress,
@@ -103,7 +105,7 @@ contract DuelContract is ReentrancyGuard {
         bool challengerJoined,
         address defenderAddress,
         string memory defenderUserID,
-        bool defenderJoined,
+        bool defenderJoined
     ) {
         challengerAddress = challenger.playerAddress;
         challengerUserID = challenger.platformUserID;
@@ -111,6 +113,11 @@ contract DuelContract is ReentrancyGuard {
         defenderAddress = defender.playerAddress;
         defenderUserID = defender.platformUserID;
         defenderJoined = defender.hasJoined;
+    }
+
+    function getGameDetails() public view returns (string memory title, string memory achievement) {
+        title = game.title;
+        achievement = game.achievement;
     }
 
     function isPlayerJoined(address player) public view returns (bool) {

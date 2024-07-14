@@ -1,23 +1,30 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "forge-std/Test.sol";
 import "../src/Duel.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 
-contract DuelTest is DSTest {
-    DuelContract duel;
+contract DuelTest is Test {
+    DuelContract duelChallengerOnly;
+    DuelContract duelBothJoined;
     string title = "Gamer Stats";
     string achievement = ">70% completion";
     address challenger = address(0x123);
     address defender = address(0x456);
     address verifier = address(0x789);
-    uint256 betSize = 1 ether;
+    uint256 betSize = 0.1 ether;
     uint256 expiryDate = block.timestamp + 30 days;
     string challengerID = "Player1";
     string defenderID = "Player2";
 
-    function setUp() public {
-        duel = new DuelContract(
+    function setUp() public { 
+        vm.deal(challenger, betSize*2);
+        
+        // Instance where only challenger has joined
+        vm.deal(challenger, betSize*2);
+        vm.prank(challenger);
+        duelChallengerOnly = new DuelContract{value: betSize}(
             title,
             achievement,
             betSize,
@@ -28,73 +35,116 @@ contract DuelTest is DSTest {
             challengerID,
             defenderID
         );
+
+        // Instance where both challenger and defender have joined
+        duelBothJoined = new DuelContract{value: betSize}(
+            title,
+            achievement,
+            betSize,
+            expiryDate,
+            verifier,
+            challenger,
+            defender,
+            challengerID,
+            defenderID
+        );
+        vm.deal(defender, betSize);
+        vm.prank(defender);
+        duelBothJoined.joinDuel{value: betSize}();
     }
 
     function testConstructorInitialization() public {
-        assertEq(duel.title(), "Gamer Stats", "Title should match the constructor input.");
-        assertEq(duel.achievement(), ">70% completion", "Achievement should match the constructor input.");
-        assertEq(duel.verifier(), verifier, "Verifier address should match the constructor input.");
-        assertEq(duel.betSize(), betSize, "Bet size should match the constructor input.");
-        assertEq(duel.expiry(), expiryDate, "Expiry date should match the constructor input.");
-        assertEq(duel.challenger().playerAddress, challenger, "Challenger address should match the constructor input.");
-        assertEq(duel.defender().playerAddress, defender, "Defender address should match the constructor input.");
-        assertEq(duel.challenger().platformUserID, challengerID, "Challenger user ID should match the constructor input.");
-        assertEq(duel.defender().platformUserID, defenderID, "Defender user ID should match the constructor input.");
-        assertFalse(duel.accepted(), "Duel should not be accepted initially.");
-        assertFalse(duel.active(), "Duel should not be active initially.");
+        (string memory duelTitle, string memory duelAchievement) = duelChallengerOnly.game();
+        (address duelChallengerAddress, string memory duelChallengerUserID, bool duelChallengerJoined) = duelChallengerOnly.challenger();
+        (address duelDefenderAddress, string memory duelDefenderUserID, bool duelDefenderJoined) = duelChallengerOnly.defender();
+        assertEq(duelTitle, "Gamer Stats", "Title should match the constructor input.");
+        assertEq(duelAchievement, ">70% completion", "Achievement should match the constructor input.");
+        assertEq(duelChallengerOnly.verifier(), verifier, "Verifier address should match the constructor input.");
+        assertEq(duelChallengerOnly.betSize(), betSize, "Bet size should match the constructor input.");
+        assertEq(duelChallengerOnly.expiry(), expiryDate, "Expiry date should match the constructor input.");
+        assertEq(duelChallengerAddress, challenger, "Challenger address should match the constructor input.");
+        assertEq(duelDefenderAddress, defender, "Defender address should match the constructor input.");
+        assertEq(duelChallengerUserID, challengerID, "Challenger user ID should match the constructor input.");
+        assertEq(duelDefenderUserID, defenderID, "Defender user ID should match the constructor input.");
+        assertFalse(duelChallengerOnly.active(), "Duel should not be active initially.");
     }
 
     function testJoinDuel() public {
-        vm.prank(challenger);
-        duel.joinDuel{value: betSize}(challengerID);
-        assertTrue(duel.isPlayerJoined(challenger));
+        DuelContract newDuel = new DuelContract{value: betSize}(
+            title,
+            achievement,
+            betSize,
+            expiryDate,
+            verifier,
+            challenger,
+            defender,
+            challengerID,
+            defenderID
+        );
+        vm.deal(defender, betSize);
+        vm.prank(defender);
+        newDuel.joinDuel{value: betSize}();
+        assertTrue(newDuel.isPlayerJoined(defender));
+        assertTrue(newDuel.active());
     }
-    function testClaimWin() public {
+    function testClaimWin() public {   
+        uint256 challengerBalance = address(challenger).balance;
         vm.prank(verifier);
-        duel.claimWin(challenger);
-        assertEq(duel.getCurrentDuelStatus(), "Inactive", "Duel should be inactive after a win is claimed.");
-        assertEq(address(challenger).balance, address(this).balance + betSize, "Winner should receive the bet amount.");
+        duelBothJoined.claimWin(challenger);
+        assertFalse(duelBothJoined.active(), "Duel should be inactive after a win is claimed.");
+        assertEq(address(challenger).balance, challengerBalance + betSize * 2, "Winner should receive the bet amount.");
     }
 
     function testFailClaimWinByNonVerifier() public {
         vm.prank(challenger); // Challenger tries to claim the win
-        vm.expectRevert("Only verifier can perform this action.");
-        duel.claimWin(challenger); // Should fail
+        duelBothJoined.claimWin(challenger); // Should fail
+        assertEq(duelBothJoined.active(), true, "Duel should still be active.");
     }
 
     function testFailClaimWinInvalidWinner() public {
         vm.prank(verifier);
-        vm.expectRevert("Only player addresses can win.");
-        duel.claimWin(address(0xABC)); // Invalid winner address
+        duelBothJoined.claimWin(address(0xABC)); // Invalid winner address
+        assertEq(duelBothJoined.active(), true, "Duel should still be active.");
     }
 
     function testRescindChallenge() public {
-        vm.prank(challenger);
         uint256 balance = address(challenger).balance;
-        duel.rescindChallenge();
+        vm.prank(challenger);
+        duelChallengerOnly.rescindChallenge();
         assertEq(address(challenger).balance, balance + betSize);  // Challenger should get their bet back
     }
 
     function testMatchExpired() public {
         vm.warp(expiryDate + 1); // Move time forward to ensure the duel is expired
-        duel.matchExpired();
-        assertEq(duel.getCurrentDuelStatus(), "Inactive");
+        uint256 balance = address(defender).balance;
+        uint256 challengerBalance = address(challenger).balance;
+        duelBothJoined.matchExpired();
+        assertEq(duelBothJoined.active(), false);
+        assertEq(address(defender).balance, balance + betSize);
+        assertEq(address(challenger).balance, challengerBalance + betSize);
     }
 
     function testMatchExpiredCannotBeCalledEarly() public {
         vm.expectRevert("Duel not yet expired.");
-        duel.matchExpired();
+        duelChallengerOnly.matchExpired();
     }
 
     function testFailJoinDuelWithIncorrectAmount() public {
         vm.prank(challenger);
         vm.expectRevert("Incorrect amount of ETH sent.");
-        duel.joinDuel{value: 0.5 ether}(challengerID); // Should fail due to incorrect ETH amount
+        duelChallengerOnly.joinDuel{value: betSize * 2}(); // Should fail due to incorrect ETH amount
     }
 
     function testFailRescindByNonChallenger() public {
         vm.prank(defender); // Defender tries to rescind
-        vm.expectRevert("Only the challenger can rescind the challenge.");
-        duel.rescindChallenge(); // Should fail
+        duelChallengerOnly.rescindChallenge(); // Should fail
+        assertEq(duelChallengerOnly.active(), true, "Duel should still be active.");
+    }
+
+    function testFailRescindDuelActive() public {
+        vm.prank(challenger);
+        vm.expectRevert("Duel is still active.");
+        duelBothJoined.rescindChallenge();
     }
 }
+

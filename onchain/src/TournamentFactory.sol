@@ -1,3 +1,4 @@
+/*
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
@@ -9,6 +10,10 @@ contract TournamentFactory is Ownable {
 
     event TournamentCreated(address indexed tournamentAddress, address indexed creator, uint256 timestamp);
     event PrizePoolFunded(address indexed tournamentAddress, address indexed funder, uint256 amount, string assetType);
+
+    constructor() {
+        // Initialization code here (if necessary)
+    }
 
     // Function to create a new tournament
     function createTournament(address[] memory _players, address _referee, string memory _customizationOptions)
@@ -24,3 +29,4 @@ contract TournamentFactory is Ownable {
         return tournaments;
     }
 }
+*/
