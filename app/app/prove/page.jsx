@@ -106,9 +106,6 @@ export default function ProvePage() {
           app_id: 70,
         },
         ({ status, isError, events }) => {
-          console.log(`status as obj: ${JSON.stringify(status, null, 4)}`);
-          console.log(`events: next...`);
-          console.log(JSON.stringify(events, null, 4));
           if (isError) {
             console.error(
               "An error has occured, open console to view logs",
@@ -143,8 +140,6 @@ export default function ProvePage() {
       setIsSubmitting(false);
     }
   };
-
-  console.log(JSON.stringify(res, null, 4));
 
   return (
     <Container maxW={"3xl"}>
